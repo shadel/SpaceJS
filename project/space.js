@@ -1,6 +1,4 @@
-
 (function() {
-
 
   /**
    * loaderJS class, core to manager loading require file
@@ -13,10 +11,15 @@
 
   /**
    * import function, use when need import a namespace or class
-   * @param {Function} func import function
-   * @param {namespaceJS} context namespace need import
-   * @param {String} name name of object need import to store in importObj
-   * @param {String} stringName fullName of object need import
+   * 
+   * @param {Function}
+   *            func import function
+   * @param {namespaceJS}
+   *            context namespace need import
+   * @param {String}
+   *            name name of object need import to store in importObj
+   * @param {String}
+   *            stringName fullName of object need import
    */
   loaderJS.prototype.import = function(func, context, name, stringName) {
     this.run(func, context, name, stringName);
@@ -30,9 +33,9 @@
       context = window;
     }
     this._imports[stringName] = {
-      func: func,
-      context: context,
-      params: args
+      func : func,
+      context : context,
+      params : args
     };
   };
 
@@ -52,9 +55,9 @@
     }
     if (this._required.length) {
       this._funcs.push({
-        func: func,
-        context: context,
-        params: args
+        func : func,
+        context : context,
+        params : args
       });
     } else {
       return func.apply(context, args);
@@ -64,33 +67,35 @@
 
   loaderJS.prototype.push = function(path, config) {
     this._required.push({
-      loaded: false,
-      path: path
-      });
+      loaded : false,
+      path : path
+    });
     this.load();
   };
-  
-  loaderJS.prototype._getUnImportPaths = function(){
-    
-    var unloadList = _.where(this._required, {loaded: false});
+
+  loaderJS.prototype._getUnImportPaths = function() {
+
+    var unloadList = _.where(this._required, {
+      loaded : false
+    });
     return _.pluck(unloadList, 'path');
   };
-  
-  loaderJS.prototype._setImportPaths = function(paths){
-    _.each(this._required, function(pathObj){
-      if(_.indexOf(paths, pathObj.path) >= 0){
+
+  loaderJS.prototype._setImportPaths = function(paths) {
+    _.each(this._required, function(pathObj) {
+      if (_.indexOf(paths, pathObj.path) >= 0) {
         pathObj.loaded = true;
       }
     }, this);
   };
 
   loaderJS.prototype.load = function(callback) {
-    try{
-      
+    try {
+
       var paths = this._getUnImportPaths();
       if (paths.length) {
         require(paths, _.bind(function() {
-          
+
           _.each(this._funcs, function(funcObj) {
             funcObj['func'].apply(funcObj.context, funcObj.params);
           }, this);
@@ -100,7 +105,7 @@
       } else {
         this._load(callback);
       }
-    } catch(e){
+    } catch (e) {
       console.log(e);
     }
   };
@@ -116,11 +121,11 @@
   };
 
   loaderJS.prototype.wrap = function(fct) {
-    for (var property in fct) {
-      if (fct.hasOwnProperty(property) &&
-          _.isFunction(fct[property]) && property != 'clone') {
+    for ( var property in fct) {
+      if (fct.hasOwnProperty(property) && _.isFunction(fct[property])
+          && property != 'clone') {
         var func = fct[property].clone();
-        var args1 = [func, fct];
+        var args1 = [ func, fct ];
         fct[property] = _.bind(function(argus) {
           var args2 = Array.prototype.slice.call(arguments, 0);
           args2.splice(0, 1);
@@ -135,10 +140,11 @@
 
   var LoaderJS = new loaderJS();
 
-
   /**
    * NameSpace Function
-   * @param {String} ns_string full name of namespace.
+   * 
+   * @param {String}
+   *            ns_string full name of namespace.
    * @return {Global} return a namespaceJS object.
    */
   this.namespace = function(ns_string) {
@@ -204,8 +210,8 @@
 
   namespaceJS.prototype._define = function(classDfObj) {
     _.extend(classDfObj.prototype, {
-      ns: this,
-      import: this.importObj
+      ns : this,
+      import : this.importObj
     });
 
     var name = classDfObj.objectName;
@@ -254,7 +260,7 @@
     if (fct.prototype) {
       clone.prototype = _.clone(fct.prototype);
     }
-    for (var property in fct) {
+    for ( var property in fct) {
       if (fct.hasOwnProperty(property) && property !== 'prototype') {
         clone[property] = fct[property];
       }
@@ -264,7 +270,9 @@
 
   /**
    * Class Define Function
-   * @param {String} className name of Class (short name).
+   * 
+   * @param {String}
+   *            className name of Class (short name).
    * @return {classJS} return a classJS obj.
    */
   this.clazz = function(className) {
@@ -278,7 +286,8 @@
     this._____init.apply(this, arguments);
   };
 
-  classJS.prototype._____init = function() {};
+  classJS.prototype._____init = function() {
+  };
   classJS.extend = function(extend) {
 
     var extendObj = namespace(extend);
