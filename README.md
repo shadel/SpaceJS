@@ -7,11 +7,19 @@ Init
 ======
 
 Require file:
-- underscore.js
-- require.js
+- [UnderscroreJS][1]
+- [RequireJS][2]
 
-Import file space.js to your index.html
-Import app.js (your main file)
+  [1]: http://underscorejs.org      "UnderscroreJS"
+  [2]: http://requirejs.org         "RequireJS"
+
+
+TIP:
+
+- Import file space.js to your index.html
+- Import app.js (your main file)
+
+
 Using
 =====
 
