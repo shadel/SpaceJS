@@ -16,19 +16,21 @@ Using
 =====
 
 In app.js
-<blockquote>
-<p>namespace('APP').</p>
-<p>  config({}).</p>
-<p>  evi({}).</p>
-<p>  import({}).</p>
-<p>  defined(</p>
-<p>    clazz('root').</p>
-<p>    body({</p>
-<p>        run: function(){</p>
-<p>          alert('hello Space JS');</p>
-<p>        }</p>
-<p>    })</p>
-<p>  ).</p>
-<p>  run('root', 'run');</p>
-</blockquote>
+
+    namespace('APP').
+        config({}).
+        evi({}).
+        import({}).
+        defined(
+            clazz('root').
+            body({
+                run: function(){
+                    alert('hello Space JS');
+                }
+            })
+        ).
+        run('root', 'run');
+
+
+
 
