@@ -7,8 +7,8 @@ Init
 ======
 
 Require file:
-underscord.js
-require.js
+- underscore.js
+- require.js
 
 Import file space.js to your index.html
 Import app.js (your main file)
