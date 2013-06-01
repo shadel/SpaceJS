@@ -40,5 +40,52 @@ In app.js
         run('root', 'run');
 
 
+Feature
+=====
 
+I. Namespace
+=====
+1.Create a namespace
 
+     namespace('APP');
+    
+2.Load config
+
+     namespace('APP').
+      config();
+    
+3.Load eviroment
+
+     namespace('APP').
+      evi({});
+    
+4.Import class or namespace from other js file
+
+     namespace('APP').
+      import({});
+    
+5.Define a Class in namespace
+
+     namespace('APP').
+      define();
+    
+6.Run a class in namespace
+
+     namespace('APP').
+      run();
+    
+II. Class
+=====
+
+1.Create a class
+
+     clazz('APP');
+    
+2.Extend a class
+
+     clazz('APP').extend();
+    
+3.Set body of class
+
+     clazz('APP').body({});
+    
