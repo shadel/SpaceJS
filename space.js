@@ -1,11 +1,9 @@
-
 (function() {
 
-
   /**
-   * loaderJS class, core to manager loading require file
+   * spaceJS class, core to manager loading require file
    */
-  var loaderJS = function() {
+  var spaceJS = function() {
     this._funcs = [];
     this._imports = {};
     this._required = [];
@@ -13,48 +11,54 @@
 
   /**
    * import function, use when need import a namespace or class
-   * @param {Function} func import function
-   * @param {namespaceJS} context namespace need import
-   * @param {String} name name of object need import to store in importObj
-   * @param {String} stringName fullName of object need import
+   * 
+   * @param {Function}
+   *            func import function.
+   * @param {namespaceJS}
+   *            context namespace need import.
+   * @param {String}
+   *            name name of object need import to store in importObj.
+   * @param {String}
+   *            stringName fullName of object need import.
    */
-  loaderJS.prototype.import = function(func, context, name, stringName) {
+  spaceJS.prototype.import = function(func, context, name, stringName) {
     this.run(func, context, name, stringName);
     this.save(func, context, name, stringName);
   };
 
-  loaderJS.prototype.save = function(func, context, name, stringName) {
+  spaceJS.prototype.save = function(func, context, name, stringName) {
     var args = Array.prototype.slice.call(arguments, 0);
     args.splice(0, 2);
     if (!context) {
       context = window;
     }
     this._imports[stringName] = {
-      func: func,
-      context: context,
-      params: args
+      func : func,
+      context : context,
+      params : args
     };
   };
 
-  loaderJS.prototype.define = function(stringName) {
+  spaceJS.prototype.define = function(stringName) {
     var importObj = this._imports[stringName];
     if (importObj) {
       importObj['func'].apply(importObj.context, importObj.params);
     }
   };
 
-  loaderJS.prototype.run = function(func, context) {
-
+  spaceJS.prototype.run = function(func, context) {
     var args = Array.prototype.slice.call(arguments, 0);
     args.splice(0, 2);
     if (!context) {
       context = window;
     }
-    if (this._required.length) {
+    var notloadPath = this._getUnImportPaths(0);
+    var loadingPath = this._getUnImportPaths(1);
+    if (notloadPath.length || loadingPath.length) {
       this._funcs.push({
-        func: func,
-        context: context,
-        params: args
+        func : func,
+        context : context,
+        params : args
       });
     } else {
       return func.apply(context, args);
@@ -62,65 +66,70 @@
     return context;
   };
 
-  loaderJS.prototype.push = function(path, config) {
+  spaceJS.prototype.push = function(path, config) {
     this._required.push({
-      loaded: false,
-      path: path
-      });
+      loaded : 0,
+      path : path
+    });
     this.load();
   };
-  
-  loaderJS.prototype._getUnImportPaths = function(){
-    
-    var unloadList = _.where(this._required, {loaded: false});
-    return _.pluck(unloadList, 'path');
+
+  spaceJS.prototype._getUnImportPaths = function(number) {
+
+    var unloadList = _.where(this._required, {
+      loaded : number
+    });
+    return _.pluck(unloadList, 'path') || [];
   };
-  
-  loaderJS.prototype._setImportPaths = function(paths){
-    _.each(this._required, function(pathObj){
-      if(_.indexOf(paths, pathObj.path) >= 0){
-        pathObj.loaded = true;
+
+  spaceJS.prototype._setImportPaths = function(paths, number) {
+    _.each(this._required, function(pathObj) {
+      if (_.indexOf(paths, pathObj.path) >= 0) {
+        pathObj.loaded = number;
       }
     }, this);
   };
 
-  loaderJS.prototype.load = function(callback) {
-    try{
-      
-      var paths = this._getUnImportPaths();
-      if (paths.length) {
-        require(paths, _.bind(function() {
-          
-          _.each(this._funcs, function(funcObj) {
-            funcObj['func'].apply(funcObj.context, funcObj.params);
-          }, this);
-          this._setImportPaths(paths);
-          this.load(callback);
-        }, this));
-      } else {
-        this._load(callback);
-      }
-    } catch(e){
-      console.log(e);
+  spaceJS.prototype.load = function(callback) {
+
+    var notloadPaths = this._getUnImportPaths(0);
+    var loadingPaths = this._getUnImportPaths(1);
+    if (notloadPaths.length) {
+      this._setImportPaths(notloadPaths, 1);
+      require(notloadPaths, _.bind(function() {
+
+        this._setImportPaths(notloadPaths, 2);
+        this.load(callback);
+      }, this));
+    } else if (loadingPaths.length) {
+      _.defer(_.bind(function() {
+        this.load(callback);
+      }, this));
+    } else {
+      _.each(this._funcs, function(funcObj) {
+        funcObj['func'].apply(funcObj.context, funcObj.params);
+      }, this);
+      this._load(callback);
     }
   };
 
-  loaderJS.prototype._load = function(callback) {
+  spaceJS.prototype._load = function(callback) {
     if (_.isFunction(callback)) {
+
       callback();
     }
   };
 
-  loaderJS.prototype.evi = function(obj) {
+  spaceJS.prototype.evi = function(obj) {
     require.config(obj);
   };
 
-  loaderJS.prototype.wrap = function(fct) {
-    for (var property in fct) {
-      if (fct.hasOwnProperty(property) &&
-          _.isFunction(fct[property]) && property != 'clone') {
+  spaceJS.prototype.wrap = function(fct) {
+    for ( var property in fct) {
+      if (fct.hasOwnProperty(property) && _.isFunction(fct[property])
+          && property != 'clone') {
         var func = fct[property].clone();
-        var args1 = [func, fct];
+        var args1 = [ func, fct ];
         fct[property] = _.bind(function(argus) {
           var args2 = Array.prototype.slice.call(arguments, 0);
           args2.splice(0, 1);
@@ -133,12 +142,13 @@
     return fct;
   };
 
-  var LoaderJS = new loaderJS();
-
+  var SpaceJS = new spaceJS();
 
   /**
    * NameSpace Function
-   * @param {String} ns_string full name of namespace.
+   * 
+   * @param {String}
+   *            ns_string full name of namespace.
    * @return {Global} return a namespaceJS object.
    */
   this.namespace = function(ns_string) {
@@ -173,7 +183,7 @@
     if (_.isObject(path)) {
       _.extend(this.config, path);
     } else {
-      LoaderJS.push(path, this.config);
+      SpaceJS.push(path, this.config);
     }
     return this;
   };
@@ -184,11 +194,11 @@
       if (_.isObject(value)) {
         stringName = value.name;
         if (value.path) {
-          LoaderJS.push(value.path, this.config);
+          SpaceJS.push(value.path, this.config);
         }
       }
 
-      LoaderJS.import(this._import, this, name, stringName);
+      SpaceJS.import(this._import, this, name, stringName);
     }, this);
     return this;
   };
@@ -198,20 +208,20 @@
   };
 
   namespaceJS.prototype.define = function(classDfObj) {
-    LoaderJS.run(this._define, this, classDfObj);
+    SpaceJS.run(this._define, this, classDfObj);
     return this;
   };
 
   namespaceJS.prototype._define = function(classDfObj) {
     _.extend(classDfObj.prototype, {
-      ns: this,
-      import: this.importObj
+      ns : this,
+      import : this.importObj
     });
 
     var name = classDfObj.objectName;
     this[name] = classDfObj;
     var classFullName = this.getFullName() + '.' + name;
-    LoaderJS.define(classFullName);
+    SpaceJS.define(classFullName);
 
     return this;
   };
@@ -231,7 +241,7 @@
 
   namespaceJS.prototype.run = function(name, func, agrs, obj) {
 
-    LoaderJS.load(_.bind(function() {
+    SpaceJS.load(_.bind(function() {
       this._run(name, func, agrs, obj);
     }, this));
     return this;
@@ -239,10 +249,10 @@
 
   namespaceJS.prototype.evi = function(obj) {
     _.each(obj.paths, function(value, key) {
-      LoaderJS.push(key, this.config);
+      SpaceJS.push(key, this.config);
     }, this);
 
-    LoaderJS.evi(obj);
+    SpaceJS.evi(obj);
     return this;
   };
 
@@ -254,7 +264,7 @@
     if (fct.prototype) {
       clone.prototype = _.clone(fct.prototype);
     }
-    for (var property in fct) {
+    for ( var property in fct) {
       if (fct.hasOwnProperty(property) && property !== 'prototype') {
         clone[property] = fct[property];
       }
@@ -264,13 +274,15 @@
 
   /**
    * Class Define Function
-   * @param {String} className name of Class (short name).
+   * 
+   * @param {String}
+   *            className name of Class (short name).
    * @return {classJS} return a classJS obj.
    */
   this.clazz = function(className) {
     var classJSObj = classJS.clone();
-    classJSObj = LoaderJS.wrap(classJSObj);
     classJSObj.objectName = className;
+    classJSObj = SpaceJS.wrap(classJSObj);
     return classJSObj;
   };
 
@@ -278,9 +290,9 @@
     this._____init.apply(this, arguments);
   };
 
-  classJS.prototype._____init = function() {};
+  classJS.prototype._____init = function() {
+  };
   classJS.extend = function(extend) {
-
     var extendObj = namespace(extend);
     if (_.isFunction(extendObj.extend)) {
       extendObj = extendObj.extend(this.prototype);
