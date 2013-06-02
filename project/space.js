@@ -1,9 +1,9 @@
 (function() {
 
   /**
-   * loaderJS class, core to manager loading require file
+   * spaceJS class, core to manager loading require file
    */
-  var loaderJS = function() {
+  var spaceJS = function() {
     this._funcs = [];
     this._imports = {};
     this._required = [];
@@ -13,20 +13,20 @@
    * import function, use when need import a namespace or class
    * 
    * @param {Function}
-   *            func import function
+   *            func import function.
    * @param {namespaceJS}
-   *            context namespace need import
+   *            context namespace need import.
    * @param {String}
-   *            name name of object need import to store in importObj
+   *            name name of object need import to store in importObj.
    * @param {String}
-   *            stringName fullName of object need import
+   *            stringName fullName of object need import.
    */
-  loaderJS.prototype.import = function(func, context, name, stringName) {
+  spaceJS.prototype.import = function(func, context, name, stringName) {
     this.run(func, context, name, stringName);
     this.save(func, context, name, stringName);
   };
 
-  loaderJS.prototype.save = function(func, context, name, stringName) {
+  spaceJS.prototype.save = function(func, context, name, stringName) {
     var args = Array.prototype.slice.call(arguments, 0);
     args.splice(0, 2);
     if (!context) {
@@ -39,21 +39,22 @@
     };
   };
 
-  loaderJS.prototype.define = function(stringName) {
+  spaceJS.prototype.define = function(stringName) {
     var importObj = this._imports[stringName];
     if (importObj) {
       importObj['func'].apply(importObj.context, importObj.params);
     }
   };
 
-  loaderJS.prototype.run = function(func, context) {
-
+  spaceJS.prototype.run = function(func, context) {
     var args = Array.prototype.slice.call(arguments, 0);
     args.splice(0, 2);
     if (!context) {
       context = window;
     }
-    if (this._required.length) {
+    var notloadPath = this._getUnImportPaths(0);
+    var loadingPath = this._getUnImportPaths(1);
+    if (notloadPath.length || loadingPath.length) {
       this._funcs.push({
         func : func,
         context : context,
@@ -65,62 +66,65 @@
     return context;
   };
 
-  loaderJS.prototype.push = function(path, config) {
+  spaceJS.prototype.push = function(path, config) {
     this._required.push({
-      loaded : false,
+      loaded : 0,
       path : path
     });
     this.load();
   };
 
-  loaderJS.prototype._getUnImportPaths = function() {
+  spaceJS.prototype._getUnImportPaths = function(number) {
 
     var unloadList = _.where(this._required, {
-      loaded : false
+      loaded : number
     });
-    return _.pluck(unloadList, 'path');
+    return _.pluck(unloadList, 'path') || [];
   };
 
-  loaderJS.prototype._setImportPaths = function(paths) {
+  spaceJS.prototype._setImportPaths = function(paths, number) {
     _.each(this._required, function(pathObj) {
       if (_.indexOf(paths, pathObj.path) >= 0) {
-        pathObj.loaded = true;
+        pathObj.loaded = number;
       }
     }, this);
   };
 
-  loaderJS.prototype.load = function(callback) {
-    try {
+  spaceJS.prototype.load = function(callback) {
 
-      var paths = this._getUnImportPaths();
-      if (paths.length) {
-        require(paths, _.bind(function() {
+    var notloadPaths = this._getUnImportPaths(0);
+    var loadingPaths = this._getUnImportPaths(1);
+    if (notloadPaths.length) {
+      this._setImportPaths(notloadPaths, 1);
+      require(notloadPaths, _.bind(function() {
 
-          _.each(this._funcs, function(funcObj) {
-            funcObj['func'].apply(funcObj.context, funcObj.params);
-          }, this);
-          this._setImportPaths(paths);
-          this.load(callback);
-        }, this));
-      } else {
-        this._load(callback);
-      }
-    } catch (e) {
-      console.log(e);
+        this._setImportPaths(notloadPaths, 2);
+        this.load(callback);
+      }, this));
+    } else if (loadingPaths.length) {
+      _.defer(_.bind(function() {
+        this.load(callback);
+      }, this));
+    } else {
+      _.each(this._funcs, function(funcObj) {
+        funcObj['func'].apply(funcObj.context, funcObj.params);
+      }, this);
+      this._load(callback);
     }
   };
 
-  loaderJS.prototype._load = function(callback) {
+  spaceJS.prototype._load = function(callback) {
     if (_.isFunction(callback)) {
+
       callback();
     }
   };
 
-  loaderJS.prototype.evi = function(obj) {
+  spaceJS.prototype.evi = function(obj) {
     require.config(obj);
   };
 
-  loaderJS.prototype.wrap = function(fct) {
+  spaceJS.prototype.wrap = function(fct) {
     for ( var property in fct) {
       if (fct.hasOwnProperty(property) && _.isFunction(fct[property])
           && property != 'clone') {
@@ -138,7 +142,7 @@
     return fct;
   };
 
-  var LoaderJS = new loaderJS();
+  var SpaceJS = new spaceJS();
 
   /**
    * NameSpace Function
@@ -179,7 +183,7 @@
     if (_.isObject(path)) {
       _.extend(this.config, path);
     } else {
-      LoaderJS.push(path, this.config);
+      SpaceJS.push(path, this.config);
     }
     return this;
   };
@@ -190,11 +194,11 @@
       if (_.isObject(value)) {
         stringName = value.name;
         if (value.path) {
-          LoaderJS.push(value.path, this.config);
+          SpaceJS.push(value.path, this.config);
         }
       }
 
-      LoaderJS.import(this._import, this, name, stringName);
+      SpaceJS.import(this._import, this, name, stringName);
     }, this);
     return this;
   };
@@ -204,7 +208,7 @@
   };
 
   namespaceJS.prototype.define = function(classDfObj) {
-    LoaderJS.run(this._define, this, classDfObj);
+    SpaceJS.run(this._define, this, classDfObj);
     return this;
   };
 
@@ -217,7 +221,7 @@
     var name = classDfObj.objectName;
     this[name] = classDfObj;
     var classFullName = this.getFullName() + '.' + name;
-    LoaderJS.define(classFullName);
+    SpaceJS.define(classFullName);
 
     return this;
   };
@@ -237,7 +241,7 @@
 
   namespaceJS.prototype.run = function(name, func, agrs, obj) {
 
-    LoaderJS.load(_.bind(function() {
+    SpaceJS.load(_.bind(function() {
       this._run(name, func, agrs, obj);
     }, this));
     return this;
@@ -245,10 +249,10 @@
 
   namespaceJS.prototype.evi = function(obj) {
     _.each(obj.paths, function(value, key) {
-      LoaderJS.push(key, this.config);
+      SpaceJS.push(key, this.config);
     }, this);
 
-    LoaderJS.evi(obj);
+    SpaceJS.evi(obj);
     return this;
   };
 
@@ -277,8 +281,8 @@
    */
   this.clazz = function(className) {
     var classJSObj = classJS.clone();
-    classJSObj = LoaderJS.wrap(classJSObj);
     classJSObj.objectName = className;
+    classJSObj = SpaceJS.wrap(classJSObj);
     return classJSObj;
   };
 
@@ -289,7 +293,6 @@
   classJS.prototype._____init = function() {
   };
   classJS.extend = function(extend) {
-
     var extendObj = namespace(extend);
     if (_.isFunction(extendObj.extend)) {
       extendObj = extendObj.extend(this.prototype);

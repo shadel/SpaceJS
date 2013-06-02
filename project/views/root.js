@@ -1,9 +1,9 @@
 var Views = Views || {};
 Views.Root = Backbone.View.extend({
-  initialize : function() {
+  initialize: function() {
     this.render();
   },
-  render : function() {
+  render: function() {
     this.$el.append('hello jsLoader');
     return this;
   }
