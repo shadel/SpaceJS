@@ -1,4 +1,6 @@
 (function() {
+  
+  // Edit by c9 ide
 
   /**
    * spaceJS class, core to manager loading require file
